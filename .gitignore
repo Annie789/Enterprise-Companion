@@ -1,0 +1,34 @@
+# Python environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Credentials and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*service-account*.json
+*credentials*.json
+*token*.json
+
+# Local database and indexes
+data/index/
+data/index_mock/
+data/index_real/
+*.db
+*.sqlite
+*.sqlite3
+
+# Real enterprise data and snapshots
+data/real/
+data/snapshots/
+data/connections/
+data/tokens/
+
+# Temporary files
+*.log
+logs/
+tmp/

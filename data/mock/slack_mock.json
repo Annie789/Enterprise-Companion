@@ -1,0 +1,67 @@
+[
+  {
+    "id": "SLACK-101",
+    "source": "slack",
+    "channel_id": "C-RELEASE",
+    "channel_name": "release-coordination",
+    "title": "Release discussion",
+    "content": "Annie confirmed that the production release remains planned for 15 October 2026 unless final validation fails.",
+    "updated_at": "2026-09-28T00:00:00Z",
+    "url": "mock://slack/release-coordination/SLACK-101",
+    "is_private": false,
+    "member_user_ids": [],
+    "user_id": "annie"
+  },
+  {
+    "id": "SLACK-102",
+    "source": "slack",
+    "channel_id": "C-RELEASE",
+    "channel_name": "release-coordination",
+    "title": "Validation reminder",
+    "content": "Reminder: release validation must be finished by 14 October so the 15 October deployment can proceed.",
+    "updated_at": "2026-09-29T00:00:00Z",
+    "url": "mock://slack/release-coordination/SLACK-102",
+    "is_private": false,
+    "member_user_ids": [],
+    "user_id": "annie"
+  },
+  {
+    "id": "SLACK-103",
+    "source": "slack",
+    "channel_id": "C-IT",
+    "channel_name": "it-support",
+    "title": "VPN troubleshooting discussion",
+    "content": "The IT team recommends restarting the VPN client and clearing stale sessions before escalating persistent login failures.",
+    "updated_at": "2026-09-25T00:00:00Z",
+    "url": "mock://slack/it-support/SLACK-103",
+    "is_private": false,
+    "member_user_ids": [],
+    "user_id": "annie"
+  },
+  {
+    "id": "SLACK-104",
+    "source": "slack",
+    "channel_id": "C-NETARCH",
+    "channel_name": "network-architecture-private",
+    "title": "Architecture migration discussion",
+    "content": "The network architecture team discussed the Q4 edge migration sequence and agreed to keep the detailed rollout private until final approval.",
+    "updated_at": "2026-09-27T00:00:00Z",
+    "url": "mock://slack/network-architecture-private/SLACK-104",
+    "is_private": true,
+    "member_user_ids": ["U_ANNIE_001", "U_BOB_002"],
+    "user_id": "annie"
+  },
+  {
+    "id": "SLACK-105",
+    "source": "slack",
+    "channel_id": "C-SEC",
+    "channel_name": "security-incident",
+    "title": "Security incident update",
+    "content": "Security Operations confirmed that investigation of the critical authentication incident is still ongoing.",
+    "updated_at": "2026-09-29T00:00:00Z",
+    "url": "mock://slack/security-incident/SLACK-105",
+    "is_private": true,
+    "member_user_ids": ["U_BOB_002"],
+    "user_id": "bob"
+  }
+]
