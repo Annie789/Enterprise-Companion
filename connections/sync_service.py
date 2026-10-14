@@ -18,6 +18,7 @@ class ConnectionSyncService:
         user_id: str,
         connection_id: str,
         source: str,
+        kind: str = "real",
     ) -> dict:
 
         if not documents:
@@ -64,6 +65,7 @@ class ConnectionSyncService:
             document.metadata["user_id"]       = user_id
             document.metadata["connection_id"] = connection_id
             document.metadata["source"]        = source
+            document.metadata["index_kind"] = kind
 
         embed_model = get_embedding_model()
         transformer = TransformationService(embed_model=embed_model)
@@ -75,11 +77,13 @@ class ConnectionSyncService:
             node.metadata["user_id"]       = user_id
             node.metadata["connection_id"] = connection_id
             node.metadata["source"]        = source
+            node.metadata["index_kind"] = kind
 
         add_nodes_to_index(
             nodes=nodes,
             embed_model=embed_model,
             user_id=user_id,
+            index_kind=kind,
         )
 
         return {

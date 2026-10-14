@@ -227,20 +227,18 @@ if page == "Connections":
     st.title("Data Sources")
     st.write("Connect your enterprise knowledge sources.")
 
-    # Both interfaces are always visible. The backend DATA_MODE decides
-    # which implementation is active; the UI cannot switch server mode.
+    # Mock and real connections are simultaneously available.
     try:
-        current_mode = get_json("/config/data-mode").get("data_mode", "real")
         registered = get_json(f"/connections/{st.session_state.auth_user['user_id']}")
         existing = registered.get("connections", [])
     except requests.RequestException as exc:
-        st.error(f"Unable to load connections or backend data mode: {exc}")
+        st.error(f"Unable to load connections: {exc}")
         st.stop()
 
     # Refresh UI state from authenticated backend rather than trusting
     # stale Streamlit session values after a backend restart.
     st.session_state.connections = {
-        c["source"]: c["connection_id"] for c in existing
+        c["source"]: c["connection_id"] for c in existing if c.get("kind", "real") == "real"
         if c.get("source") in ("confluence", "jira", "slack", "google_drive")
     }
 
@@ -249,23 +247,18 @@ if page == "Connections":
     with mock_tab:
         st.subheader("Mock Enterprise Sources")
         st.caption("Synthetic Confluence, Jira, Slack and Google Drive data. No provider credentials required.")
-        if current_mode != "mock":
-            st.warning("Backend is in real mode. Set DATA_MODE=mock in the server environment and restart FastAPI to enable mock synchronization.")
-        else:
-            st.success("Backend configured for mock data")
+        st.success("Mock connectors are available")
         for source in ("confluence", "jira", "slack", "google_drive"):
             label = source.replace("_", " ").title()
-            connected = source in st.session_state.connections
+            connected = any(c.get("source") == source and c.get("kind") == "mock" for c in existing)
             st.write(f"{'Connected' if connected else 'Not connected'} — {label}")
 
         if st.button("Connect All Mock Sources", type="primary", use_container_width=True,
-                     disabled=current_mode != "mock", key="connect_all_mock_sources"):
+                     key="connect_all_mock_sources"):
             try:
                 with st.spinner("Registering and synchronizing four mock sources..."):
                     result = post_json("/connections/mock/connect-all", {})
                 for item in result.get("connections", []):
-                    if item.get("connection_id"):
-                        st.session_state.connections[item["source"]] = item["connection_id"]
                     if item.get("status") == "synced":
                         st.success(f"{item['source'].replace('_',' ').title()}: synced")
                     else:
@@ -277,8 +270,6 @@ if page == "Connections":
     with real_tab:
         st.subheader("Real Enterprise Connections")
         st.caption("Connect real provider accounts using their respective credentials.")
-        if current_mode != "real":
-            st.info("Real connectors are preserved below. To activate real API testing and syncing, configure DATA_MODE=real on the backend and restart it. Buttons are disabled in mock mode.")
         (
             confluence_tab,
             jira_tab,
@@ -323,7 +314,7 @@ if page == "Connections":
 
             with col1:
 
-                if st.button("Test Confluence", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Test Confluence", use_container_width=True):
 
                     if not confluence_url or not confluence_email or not confluence_token or not confluence_space:
                         st.warning("Enter URL, email, token and space key.")
@@ -350,7 +341,7 @@ if page == "Connections":
 
             with col2:
 
-                if st.button("Connect Confluence", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Connect Confluence", use_container_width=True):
 
                     if not confluence_url or not confluence_email or not confluence_token or not confluence_space:
                         st.warning("Enter URL, email, token and space key.")
@@ -382,7 +373,7 @@ if page == "Connections":
                 st.divider()
                 st.success("Confluence is connected.")
 
-                if st.button("Sync Confluence", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Sync Confluence", use_container_width=True):
                     try:
                         with st.spinner("Syncing Confluence..."):
                             result = sync_connection(connection_id)
@@ -427,7 +418,7 @@ if page == "Connections":
 
             with col1:
 
-                if st.button("Test Jira", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Test Jira", use_container_width=True):
 
                     if not jira_url or not jira_email or not jira_token or not jira_project:
                         st.warning("Enter URL, email, token and project key.")
@@ -454,7 +445,7 @@ if page == "Connections":
 
             with col2:
 
-                if st.button("Connect Jira", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Connect Jira", use_container_width=True):
 
                     if not jira_url or not jira_email or not jira_token or not jira_project:
                         st.warning("Enter URL, email, token and project key.")
@@ -486,7 +477,7 @@ if page == "Connections":
                 st.divider()
                 st.success("Jira is connected.")
 
-                if st.button("Sync Jira", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Sync Jira", use_container_width=True):
                     try:
                         with st.spinner("Syncing Jira..."):
                             result = sync_connection(connection_id)
@@ -520,7 +511,7 @@ if page == "Connections":
 
             with col1:
 
-                if st.button("Test Slack", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Test Slack", use_container_width=True):
 
                     if not slack_token or not slack_channel:
                         st.warning("Enter bot token and channel ID.")
@@ -545,7 +536,7 @@ if page == "Connections":
 
             with col2:
 
-                if st.button("Connect Slack", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Connect Slack", use_container_width=True):
 
                     if not slack_token or not slack_channel:
                         st.warning("Enter bot token and channel ID.")
@@ -575,7 +566,7 @@ if page == "Connections":
                 st.divider()
                 st.success("Slack is connected.")
 
-                if st.button("Sync Slack", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Sync Slack", use_container_width=True):
                     try:
                         with st.spinner("Syncing Slack..."):
                             result = sync_connection(connection_id)
@@ -608,7 +599,7 @@ if page == "Connections":
 
             with col1:
 
-                if st.button("Test Google Drive", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Test Google Drive", use_container_width=True):
 
                     if not drive_folder:
                         st.warning("Enter a Google Drive folder ID.")
@@ -632,7 +623,7 @@ if page == "Connections":
 
             with col2:
 
-                if st.button("Connect Google Drive", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Connect Google Drive", use_container_width=True):
 
                     if not drive_folder:
                         st.warning("Enter a Google Drive folder ID.")
@@ -661,7 +652,7 @@ if page == "Connections":
                 st.divider()
                 st.success("Google Drive is connected.")
 
-                if st.button("Sync Google Drive", use_container_width=True, disabled=current_mode != "real"):
+                if st.button("Sync Google Drive", use_container_width=True):
                     try:
                         with st.spinner("Syncing Google Drive..."):
                             result = sync_connection(connection_id)

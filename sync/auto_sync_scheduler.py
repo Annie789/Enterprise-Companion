@@ -201,7 +201,7 @@ def _get_connections_by_user() -> Dict[str, List[dict]]:
     result: Dict[str, List[dict]] = {}
     for conn in connection_manager._connections.values():
         source = conn.get("source", "")
-        if source not in _get_mock_sources():
+        if source not in _get_mock_sources() or conn.get("kind", "real") != "mock":
             continue
         uid = conn["user_id"]
         if uid not in result:
@@ -401,13 +401,14 @@ class AutoSyncScheduler:
                             prev_docs.pop(sid, None)
                             continue
                         try:
-                            if index_exists(user_id):
+                            if index_exists(user_id, index_kind="mock"):
                                 remove_document_from_index(
                                     user_id=user_id,
                                     embed_model=embed_model,
                                     source=source,
                                     source_id=sid,
                                     connection_id=connection_id,
+                                    index_kind="mock",
                                 )
                             cycle.deleted += 1
                         except OldIndexFormatError:
@@ -504,6 +505,7 @@ class AutoSyncScheduler:
                 user_id=user_id,
                 connection_id=connection_id,
                 source=source,
+                kind="mock",
             )
 
     @staticmethod

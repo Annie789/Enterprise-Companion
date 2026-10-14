@@ -45,6 +45,7 @@ from indexing.vector_store import (
     create_storage_context,
     get_index_directory,
     load_storage_context,
+    scoped_index_operation,
 )
 
 from indexing.doc_identity import (
@@ -83,6 +84,7 @@ class OldIndexFormatError(Exception):
 # INDEX EXISTENCE / METADATA
 # =========================================================
 
+@scoped_index_operation
 def index_exists(user_id: str) -> bool:
     index_dir = get_index_directory(user_id)
 
@@ -490,6 +492,7 @@ def _document_unchanged(
 # CREATE INDEX
 # =========================================================
 
+@scoped_index_operation
 def create_index(
     nodes: List[BaseNode],
     embed_model: BaseEmbedding,
@@ -540,6 +543,7 @@ def create_index(
 # LOAD EXISTING INDEX
 # =========================================================
 
+@scoped_index_operation
 def load_existing_index(
     embed_model: BaseEmbedding,
     user_id: str,
@@ -573,6 +577,7 @@ def load_existing_index(
 # INCREMENTAL INDEX UPDATE
 # =========================================================
 
+@scoped_index_operation
 def add_nodes_to_index(
     nodes: List[BaseNode],
     embed_model: BaseEmbedding,
@@ -797,6 +802,7 @@ def _delete_doc_id(
 # REMOVE DOCUMENTS BY SOURCE / CONNECTION
 # =========================================================
 
+@scoped_index_operation
 def remove_source_from_index(
     user_id: str,
     embed_model: BaseEmbedding,
@@ -812,6 +818,7 @@ def remove_source_from_index(
     )
 
 
+@scoped_index_operation
 def remove_connection_from_index(
     user_id: str,
     embed_model: BaseEmbedding,
@@ -827,6 +834,7 @@ def remove_connection_from_index(
     )
 
 
+@scoped_index_operation
 def remove_document_from_index(
     user_id: str,
     embed_model: BaseEmbedding,
@@ -1042,6 +1050,7 @@ def _remove_from_index_old(
 # REMOVE ALL USER DOCUMENTS
 # =========================================================
 
+@scoped_index_operation
 def remove_all_user_documents(
     user_id: str,
     embed_model: BaseEmbedding,
@@ -1095,6 +1104,7 @@ def remove_all_user_documents(
 # PUBLIC ENTRY POINT
 # =========================================================
 
+@scoped_index_operation
 def build_index(
     nodes: List[BaseNode],
     embed_model: BaseEmbedding,
@@ -1115,6 +1125,7 @@ def build_index(
 # FORCE REBUILD
 # =========================================================
 
+@scoped_index_operation
 def rebuild_index(
     nodes: List[BaseNode],
     embed_model: BaseEmbedding,

@@ -26,11 +26,15 @@ class ConnectionManager:
         user_id: str,
         source: str,
         credentials: dict,
+        kind: str = "real",
     ) -> str:
         """
         Store source credentials and return
         a connection ID.
         """
+
+        if kind not in ("mock", "real"):
+            raise ValueError("Invalid connection kind")
 
         connection_id = str(
             uuid.uuid4()
@@ -42,6 +46,7 @@ class ConnectionManager:
             "connection_id": connection_id,
             "user_id": user_id,
             "source": source,
+            "kind": kind,
             "credentials": credentials,
             "status": "connected",
         }

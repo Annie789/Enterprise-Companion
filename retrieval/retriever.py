@@ -1,6 +1,6 @@
 # retriever.py — full updated file
 
-from typing import List
+from typing import List, Sequence
 
 from llama_index.core import VectorStoreIndex
 from llama_index.core.schema import NodeWithScore
@@ -33,7 +33,7 @@ class RetrievalService:
 
     def __init__(
         self,
-        index: VectorStoreIndex,
+        index: VectorStoreIndex | Sequence[VectorStoreIndex],
         initial_top_k: int = 20,
         final_top_k: int = 5,
     ):
@@ -42,9 +42,9 @@ class RetrievalService:
         self.initial_top_k = initial_top_k
         self.final_top_k   = final_top_k
 
-        self.retriever = index.as_retriever(
-            similarity_top_k=initial_top_k
-        )
+        indexes = [index] if isinstance(index, VectorStoreIndex) else list(index)
+        self.indexes = indexes
+        self.retrievers = [i.as_retriever(similarity_top_k=initial_top_k) for i in indexes]
 
     def retrieve(
         self,
@@ -77,7 +77,9 @@ class RetrievalService:
         # Fetch more candidates than needed so that after
         # permission filtering, enough authorized nodes
         # remain for reranking.
-        retrieved_nodes = self.retriever.retrieve(query)
+        retrieved_nodes = []
+        for retriever in self.retrievers:
+            retrieved_nodes.extend(retriever.retrieve(query))
 
         # ── 2. Permission filtering ───────────────────────────────
         # This is the security boundary. No unauthorized

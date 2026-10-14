@@ -158,7 +158,7 @@ def _retrieve_for_source(
     5. Build display-safe result
 
     No separate vector index is used. The existing
-    RetrievalService.index is reused.
+    RetrievalService.indexes are searched independently.
     """
     if not query or not query.strip():
         return {
@@ -179,13 +179,15 @@ def _retrieve_for_source(
     # selecting top-K nodes first. Otherwise a less frequent source can be
     # starved by high-scoring results from other sources.
     # Fail closed if the index/adapter cannot honor metadata filtering.
-    source_retriever = retrieval_service.index.as_retriever(
-        similarity_top_k=retrieval_service.initial_top_k,
-        filters=MetadataFilters(filters=[
-            MetadataFilter(key="source", operator=FilterOperator.EQ, value=source)
-        ]),
-    )
-    retrieved_nodes = source_retriever.retrieve(query)
+    retrieved_nodes = []
+    for index in retrieval_service.indexes:
+        source_retriever = index.as_retriever(
+            similarity_top_k=retrieval_service.initial_top_k,
+            filters=MetadataFilters(filters=[
+                MetadataFilter(key="source", operator=FilterOperator.EQ, value=source)
+            ]),
+        )
+        retrieved_nodes.extend(source_retriever.retrieve(query))
 
     # ── 2. Defense-in-depth source check ─────────────────────
     source_nodes = _filter_by_source(retrieved_nodes, source)

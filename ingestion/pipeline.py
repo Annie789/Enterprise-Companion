@@ -17,7 +17,7 @@ Supports two usage patterns:
       })
 
   In both patterns:
-    - mode is read from DATA_MODE env var (default: "mock")
+    - source kind is selected per call (default mock), not process-wide
     - Credentials dict takes priority over env vars when both are present
     - Each source is loaded independently; a failure in one does not stop others
     - Snapshots are saved per-source when SAVE_REAL_SNAPSHOT=true
@@ -32,7 +32,7 @@ from ingestion.loader.drive import load_google_drive
 from ingestion.snapshot import save_documents_to_json
 
 
-def run_ingestion(credentials=None):
+def run_ingestion(credentials=None, kind="mock"):
     """
     Main ingestion entry point.
 
@@ -52,7 +52,9 @@ def run_ingestion(credentials=None):
     """
 
     # ── Config from environment ────────────────────────────────────────
-    mode          = os.getenv("DATA_MODE", "mock").lower()
+    if kind not in ("mock", "real"):
+        raise ValueError("kind must be mock or real")
+    mode = kind
     save_snapshot = os.getenv("SAVE_REAL_SNAPSHOT", "false").lower() == "true"
 
     # ── Credential resolution ─────────────────────────────────────────

@@ -167,13 +167,19 @@ adp_client = None
 
 def get_user_rag_pipeline(user_id: str) -> RAGPipeline:
 
-    vector_index = load_existing_index(
-        embed_model=embed_model,
-        user_id=user_id,
-    )
+    indexes = []
+    for kind in ("mock", "real"):
+        try:
+            indexes.append(load_existing_index(
+                embed_model=embed_model, user_id=user_id, index_kind=kind
+            ))
+        except FileNotFoundError:
+            pass
+    if not indexes:
+        raise FileNotFoundError(f"No mock or real index for {user_id}")
 
     retrieval_service = RetrievalService(
-        index=vector_index,
+        index=indexes,
         initial_top_k=20,
         final_top_k=5,
     )
@@ -182,18 +188,6 @@ def get_user_rag_pipeline(user_id: str) -> RAGPipeline:
         retrieval_service=retrieval_service,
         adp_client=ADPClient(visitor_id=user_id),   # ← per-user visitor_id
     )
-
-
-def _is_mock_mode() -> bool:
-    """Return True when the app runs in mock data mode."""
-    return os.getenv("DATA_MODE", "mock").lower() != "real"
-
-
-# Public mode metadata contains no credentials and helps the frontend
-# display the appropriate connection UI.
-@app.get("/config/data-mode")
-def data_mode(user: AuthUser = Depends(get_current_user)):
-    return {"data_mode": "mock" if _is_mock_mode() else "real"}
 
 
 # =========================================================
@@ -326,15 +320,14 @@ def connect_confluence(
 
     try:
 
-        # Validate credentials first (skip in mock mode)
-        if not _is_mock_mode():
-            confluence_connection_service\
-                .test_connection(
-                    base_url=request.base_url,
-                    api_token=request.api_token,
-                    email=request.email,
-                    space_keys=request.space_keys,
-                )
+        # Validate real provider credentials before storing the connection
+        confluence_connection_service\
+            .test_connection(
+                base_url=request.base_url,
+                api_token=request.api_token,
+                email=request.email,
+                space_keys=request.space_keys,
+            )
 
         # Store connection
         connection_id = (
@@ -439,14 +432,13 @@ def connect_jira(
 
     try:
 
-        if not _is_mock_mode():
-            jira_connection_service\
-                .test_connection(
-                    server_url=request.server_url,
-                    email=request.email,
-                    api_token=request.api_token,
-                    project_keys=request.project_keys,
-                )
+        jira_connection_service\
+            .test_connection(
+                server_url=request.server_url,
+                email=request.email,
+                api_token=request.api_token,
+                project_keys=request.project_keys,
+            )
 
         connection_id = (
             connection_manager
@@ -547,12 +539,11 @@ def connect_slack(
 
     try:
 
-        if not _is_mock_mode():
-            slack_connection_service\
-                .test_connection(
-                    bot_token=request.bot_token,
-                    channel_ids=request.channel_ids,
-                )
+        slack_connection_service\
+            .test_connection(
+                bot_token=request.bot_token,
+                channel_ids=request.channel_ids,
+            )
 
         connection_id = (
             connection_manager
@@ -643,11 +634,10 @@ def connect_google_drive(
 
     try:
 
-        if not _is_mock_mode():
-            google_drive_connection_service\
-                .test_connection(
-                    folder_ids=request.folder_ids,
-                )
+        google_drive_connection_service\
+            .test_connection(
+                folder_ids=request.folder_ids,
+            )
 
         connection_id = (
             connection_manager
@@ -728,6 +718,7 @@ def get_connections(
                     "source"
                 ]
             ),
+            "kind": connection.get("kind", "real"),
             "status": (
                 connection[
                     "status"
@@ -852,7 +843,7 @@ def sync_connection(
         # -------------------------------------------------
         # Mock mode: use mock loaders for the demo
         # -------------------------------------------------
-        if _is_mock_mode():
+        if connection.get("kind", "real") == "mock":
             _MOCK_LOADERS = {
                 "confluence":   "ingestion.loader.confluence.load_mock_confluence",
                 "jira":         "ingestion.loader.jira.load_mock_jira",
@@ -870,6 +861,7 @@ def sync_connection(
                     user_id=user_id,
                     connection_id=connection_id,
                     source=source,
+                    kind="mock",
                 )
             else:
                 return {
@@ -890,7 +882,6 @@ def sync_connection(
                         connection_id
                     ),
                     credentials=credentials,
-                    verified_user_email=user.email,
                 )
             )
 
@@ -908,7 +899,6 @@ def sync_connection(
                         connection_id
                     ),
                     credentials=credentials,
-                    verified_user_email=user.email,
                 )
             )
 
@@ -972,6 +962,7 @@ def sync_connection(
                 source
             ),
             "status": "synced",
+            "kind": connection.get("kind", "real"),
             "sync": (
                 result
             ),
@@ -1033,17 +1024,15 @@ def connect_all_mock_sources(user: AuthUser = Depends(get_current_user)):
     """
     from fastapi import HTTPException
 
-    if not _is_mock_mode():
-        raise HTTPException(status_code=403, detail="Mock connections are disabled")
 
     sources = ("confluence", "jira", "slack", "google_drive")
     current = connection_manager.get_user_connections(user.user_id)
     results = []
     for source in sources:
-        existing = next((c for c in current if c.get("source") == source), None)
+        existing = next((c for c in current if c.get("source") == source and c.get("kind") == "mock"), None)
         connection_id = existing["connection_id"] if existing else (
             connection_manager.create_connection(
-                user_id=user.user_id, source=source, credentials={}
+                user_id=user.user_id, source=source, credentials={}, kind="mock"
             )
         )
         # Call the existing sync implementation, including ownership checks,
@@ -1206,13 +1195,18 @@ def revoke_resource(
     Admin/compliance only.
     """
     require_admin(user)
-    result = revocation_service.revoke_resource(
-        user_id     = target_user_id,
-        source      = request.source,
-        resource_id = request.resource_id,
-        revoked_by  = user.user_id,
-    )
-    return result
+    from indexing.vector_store import index_kind
+    results = []
+    for kind in ("mock", "real"):
+        with index_kind(kind):
+            result = revocation_service.revoke_resource(
+            user_id     = target_user_id,
+            source      = request.source,
+            resource_id = request.resource_id,
+            revoked_by  = user.user_id,
+        )
+        results.append({"kind": kind, "result": result})
+    return {"results": results}
 
 
 @app.post("/revoke/source")
@@ -1226,12 +1220,17 @@ def revoke_source(
     Admin/compliance only.
     """
     require_admin(user)
-    result = revocation_service.revoke_source(
-        user_id    = target_user_id,
-        source     = request.source,
-        revoked_by = user.user_id,
-    )
-    return result
+    from indexing.vector_store import index_kind
+    results = []
+    for kind in ("mock", "real"):
+        with index_kind(kind):
+            result = revocation_service.revoke_source(
+            user_id    = target_user_id,
+            source     = request.source,
+            revoked_by = user.user_id,
+        )
+        results.append({"kind": kind, "result": result})
+    return {"results": results}
 
 
 @app.delete("/connections/{connection_id}")
@@ -1253,7 +1252,9 @@ def disconnect_source(
     # Use connection-level revocation (not source-level) to prevent
     # disconnecting one connection from deleting another connection
     # to the same source.
-    revocation_service.revoke_connection(
+    from indexing.vector_store import index_kind
+    with index_kind(connection.get("kind", "real")):
+        revocation_service.revoke_connection(
         user_id       = connection["user_id"],
         connection_id = connection_id,
         revoked_by    = user.user_id,
