@@ -805,7 +805,7 @@ elif page == "Chat":
                 f"({'Mock' if c.get('kind') == 'mock' else 'Real'})"
                 for c in active_connections
             ))
-            st.caption("Connected sources: " + ", ".join(source_labels))
+            st.caption("Available sources: " + ", ".join(source_labels))
         else:
             st.info("No sources are connected yet. Open Connections to add a source.")
     except requests.RequestException as exc:
