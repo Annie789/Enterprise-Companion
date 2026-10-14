@@ -1,4 +1,4 @@
-# DEMO — Aspire Internal Brain (Agentic RAG)
+# ECO - Enterprise Companion
 
 Follow these scenarios in order. 
 
@@ -115,37 +115,3 @@ Select each persona in the sidebar and click **Login**. Mock credentials are for
 4. Click **Verify Chain Integrity**. **Expected:** chain `intact = true`.
 5. **Note:** The current query audit records authorized results; do not claim it captures every rejected vector candidate.
 
-### Scenario F — RAG Triad Evaluation
-
-**Goal:** Show measured RAG quality.
-
-1. Keep `RAG_EVALUATION_ENABLED=true`; ensure `ragas` and model credentials work.
-2. Login as **Annie** and repeat the **Scenario A** question.
-3. Expand **Agentic RAG Evaluation** and record these actual values:
-
-| Metric | Suggested demo target* | Actual score |
-|---|---:|---|
-| Context relevance | ≥ 0.80 | ______ |
-| Faithfulness | ≥ 0.90 | ______ |
-| Answer relevance | ≥ 0.80 | ______ |
-
-4. Check **Context evaluation** = `ok` and **Answer evaluation** = `ok`; each score must be numeric between 0 and 1. If any score is missing or a status is `unavailable`, `error`, `invalid_score` or `partial_failure`, evaluation has **not passed**.
-5. Use a different question, such as **What is the VPN support guide?**, and compare the three results. Scores need not differ on every query, but each must be calculated for the submitted question/context/answer.
-6. Assess the result: context relevance tests retrieval quality; faithfulness tests whether claims are grounded; answer relevance tests whether the user question was answered. **RAG Triad does not prove RBAC security**; Scenario B and D cover that.
-
-*Thresholds are suggested project targets, not universal standards. Scores are not supplied in advance.
-
-
-## 7. Quick Results Checklist
-
-| Test | Pass? |
-|---|---|
-| Backend health and all four sources synced | ☐ |
-| A — Answer + real agent tool executions + citations | ☐ |
-| B — Contractor receives no restricted information | ☐ |
-| C — Updated fact returned after sync | ☐ |
-| D — Revoked content stays unavailable after resync | ☐ |
-| E — Audit reconstruction + chain integrity | ☐ |
-| F — All three actual RAGAS scores with `ok` statuses | ☐ |
-
-**Done:** Once every row passes, capture screenshots of the chat answer/citations, tool trace, RAG scores, sync update, revocation result, and audit verification for the presentation.
