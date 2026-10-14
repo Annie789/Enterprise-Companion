@@ -97,13 +97,9 @@ async def lifespan(app: FastAPI):
     adp_client = ADPClient()
     print("ADP client initialized.")
 
-    # ── Start the auto-sync scheduler ────────────────────────
-    # Disabled during automated tests via env var.
-    if os.environ.get("MOCK_SYNC_DISABLE", "").lower() != "true":
-        auto_sync_scheduler.start()
-        print("Auto-sync scheduler started.")
-    else:
-        print("Auto-sync scheduler disabled (MOCK_SYNC_DISABLE=true).")
+    # Start auto-sync scheduler
+    auto_sync_scheduler.start()
+    print("Auto-sync scheduler started.")
 
     print("Enterprise RAG initialized successfully.\n")
 
