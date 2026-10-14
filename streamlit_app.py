@@ -785,19 +785,31 @@ elif page == "Chat":
     st.title("Enterprise Knowledge Assistant")
     st.caption("Ask questions across your indexed enterprise knowledge.")
 
-    # Connected source status
-    connected_sources = list(st.session_state.connections.keys())
-
-    if connected_sources:
-        st.caption(
-            "Connected sources: "
-            + ", ".join(
-                source.replace("_", " ").title()
-                for source in connected_sources
-            )
+    # Read all user connections from the backend, including mock and real.
+    # st.session_state.connections intentionally tracks only real connections
+    # for the real-provider connection/sync forms.
+    try:
+        registered = get_json(
+            f"/connections/{st.session_state.auth_user['user_id']}"
         )
-    else:
-        st.info("No sources are connected yet. Open Connections to add a source.")
+        all_connections = registered.get("connections", [])
+        active_connections = [
+            c for c in all_connections
+            if c.get("status") in ("connected", "synced")
+            and c.get("source") in
+            ("confluence", "jira", "slack", "google_drive")
+        ]
+        if active_connections:
+            source_labels = list(dict.fromkeys(
+                f"{c['source'].replace('_', ' ').title()} "
+                f"({'Mock' if c.get('kind') == 'mock' else 'Real'})"
+                for c in active_connections
+            ))
+            st.caption("Connected sources: " + ", ".join(source_labels))
+        else:
+            st.info("No sources are connected yet. Open Connections to add a source.")
+    except requests.RequestException as exc:
+        st.warning(f"Unable to check connected sources: {exc}")
 
     # Display history
     for message in st.session_state.messages:

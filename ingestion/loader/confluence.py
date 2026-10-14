@@ -212,7 +212,7 @@ def load_mock_confluence():
                     "allowed_groups":      record.get("allowed_groups", []),
                     "restricted_to_users": record.get("restricted_to_users", []),
                     "restriction_type":    record.get("restriction_type", "inherited"),
-                    "has_restrictions":    record.get("has_restrictions", False),
+                    "has_restrictions":    record.get("has_restrictions"),
 
                     # ── Ownership ─────────────────────────────
                     # Binds the indexed content to the user who

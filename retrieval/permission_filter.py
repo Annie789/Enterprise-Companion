@@ -35,7 +35,13 @@ def _check_confluence(metadata: dict, user_context: dict) -> bool:
         return False
 
     # ── No restrictions → allow (space-level default) ───────
-    if not has_restrictions:
+    if has_restrictions is False:
+        # Fail closed on contradictory ACL metadata.  A page cannot be
+        # considered unrestricted if the source describes group/user limits.
+        if metadata.get("allowed_groups") or metadata.get("restricted_to_users"):
+            return False
+        if metadata.get("restriction_type", "none") not in ("none", "", None):
+            return False
         return True
 
     # ── Inherited restrictions → deny ───────────────────────

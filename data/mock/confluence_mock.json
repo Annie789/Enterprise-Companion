@@ -7,10 +7,13 @@
     "content": "The production release is scheduled for 15 October 2026. The release owner is Annie. Final go-live approval will be confirmed after validation is completed.",
     "updated_at": "2026-09-25T00:00:00Z",
     "url": "mock://confluence/ENG/CONF-001",
-    "allowed_groups": ["engineering", "product"],
+    "allowed_groups": [
+      "engineering",
+      "product"
+    ],
     "restricted_to_users": [],
     "restriction_type": "group",
-    "has_restrictions": false,
+    "has_restrictions": true,
     "user_id": "annie"
   },
   {
@@ -35,8 +38,13 @@
     "content": "The edge architecture migration is planned for Q4 2026. The detailed migration sequence is restricted to the network architecture team.",
     "updated_at": "2026-09-26T00:00:00Z",
     "url": "mock://confluence/ENG/CONF-003",
-    "allowed_groups": ["network-architecture"],
-    "restricted_to_users": ["acc:annie:confluence", "acc:bob:confluence"],
+    "allowed_groups": [
+      "network-architecture"
+    ],
+    "restricted_to_users": [
+      "acc:annie:confluence",
+      "acc:bob:confluence"
+    ],
     "restriction_type": "mixed",
     "has_restrictions": true,
     "user_id": "annie"
@@ -49,10 +57,13 @@
     "content": "Critical security incidents must be escalated to the security operations team immediately. The incident commander must open a war room and record key decisions.",
     "updated_at": "2026-09-22T00:00:00Z",
     "url": "mock://confluence/SEC/CONF-004",
-    "allowed_groups": ["security", "engineering"],
+    "allowed_groups": [
+      "security",
+      "engineering"
+    ],
     "restricted_to_users": [],
     "restriction_type": "group",
-    "has_restrictions": false,
+    "has_restrictions": true,
     "user_id": "bob"
   },
   {
@@ -63,10 +74,13 @@
     "content": "Production validation must be completed by 14 October 2026. The checklist includes smoke tests, rollback verification, and change approval confirmation.",
     "updated_at": "2026-09-27T00:00:00Z",
     "url": "mock://confluence/PROD/CONF-005",
-    "allowed_groups": ["engineering", "product"],
+    "allowed_groups": [
+      "engineering",
+      "product"
+    ],
     "restricted_to_users": [],
     "restriction_type": "group",
-    "has_restrictions": false,
+    "has_restrictions": true,
     "user_id": "annie"
   },
   {
@@ -77,7 +91,9 @@
     "content": "Compensation review documents are restricted to Human Resources and authorized management personnel.",
     "updated_at": "2026-09-15T00:00:00Z",
     "url": "mock://confluence/HR/CONF-006",
-    "allowed_groups": ["hr"],
+    "allowed_groups": [
+      "hr"
+    ],
     "restricted_to_users": [],
     "restriction_type": "group",
     "has_restrictions": true,
